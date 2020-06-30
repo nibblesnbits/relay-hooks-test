@@ -1,0 +1,456 @@
+schema {
+  query: RootQueryType
+  mutation: mutation
+}
+
+type Activity {
+  activityId: Int!
+  name: String!
+  shortDescription: String
+  description: String
+  imageUrl: String
+  activityUrl: String
+  requiresChatLink: Boolean!
+  isApproved: Boolean
+  ageMin: Int
+  ageMax: Int
+  durationInMinutes: Int
+  gender: Int!
+  priceMin: Float
+  priceMax: Float
+  events: [Event]
+  users: [AppUser]
+}
+
+type ActivityConnection {
+  totalCount: Int!
+  edges: [ActivityConnectionEdge!]
+  pageInfo: PageInfo!
+}
+
+type ActivityConnectionEdge {
+  node: Activity!
+  cursor: String!
+}
+
+type Advertiser {
+  advertiserId: Int!
+  name: String!
+  email: String!
+  events: [Event]
+}
+
+type AppUser {
+  appUserId: Int!
+  firstName: String
+  lastName: String
+  picUrl: String
+  birthday: String
+  gender: Int
+  phone: String
+  email: String
+  frequency: Int
+  budgetPerMonth: Float
+  budgetPerActivity: Float
+  country: String
+  timezone: String
+  isBanned: Boolean!
+  setupMode: Boolean!
+  schedules(
+    """
+    Earliest date to find entries
+    """
+    from: DateTime
+
+    """
+    Latest date to find entries
+    """
+    to: DateTime
+  ): [UserSchedule]
+  contactInfo(type: String): [UserContact]
+  claims(
+    """
+    Earliest date to find entries
+    """
+    from: DateTime
+
+    """
+    Latest date to find entries
+    """
+    to: DateTime
+  ): [Claim]
+  groups(
+    first: Int
+    after: ID
+    last: Int
+    before: ID
+    orderBy: String = "groupId"
+    orderDirection: OrderDirection = Asc
+
+    """
+    The user's status within the group
+    """
+    status: GroupStatus = Joined
+  ): GroupConnection
+  unviewedActivities(
+    first: Int
+    after: ID
+    last: Int
+    before: ID
+    orderBy: String = "activityId"
+    orderDirection: OrderDirection = Asc
+  ): UnviewedActivitiesConnection
+  activities(
+    first: Int
+    after: ID
+    last: Int
+    before: ID
+    orderBy: String = "activityId"
+    orderDirection: OrderDirection = Asc
+    isAdded: Boolean = true
+  ): ActivityConnection
+  categories(status: CategoryStatus = OptIn): [Category]
+  recurringSchedules: [UserRecurringSchedule]
+  plans(
+    """
+    Earliest date to find entries
+    """
+    from: DateTime
+
+    """
+    Latest date to find entries
+    """
+    to: DateTime
+  ): [Plan]
+  pendingInvites: [PendingInvite]
+}
+
+type AppUserConnection {
+  totalCount: Int!
+  edges: [AppUserConnectionEdge!]
+  pageInfo: PageInfo!
+}
+
+type AppUserConnectionEdge {
+  node: AppUser!
+  cursor: String!
+}
+
+type Attendance {
+  attendanceId: Int!
+  appUserId: Int!
+  eventId: Int!
+  attended: Boolean!
+  rating: Int!
+  attendee: AppUser!
+}
+
+"""
+Contains information about the currently authenticated (or anonymous) user, as well as data required for authentication.
+"""
+type AuthInfo {
+  authUrl: String!
+  authorized: Boolean!
+  viewer: AppUser
+}
+
+type Category {
+  categoryId: Int!
+  parentId: Int!
+  name: String!
+  users: [AppUser]
+}
+
+enum CategoryStatus {
+  """
+  Indicates that the users has expressed interest in this Category
+  """
+  OptIn
+
+  """
+  Indicates that the users has expressed disinterest in this Category
+  """
+  OptOut
+}
+
+type Claim {
+  appUserId: Int!
+  claimType: String!
+  claimValue: String!
+}
+
+enum ContactMethod {
+  Email
+  Phone
+}
+
+scalar DateTime
+
+type Event {
+  eventId: Int!
+  datetimeUtc: DateTime!
+  location: Location!
+  advertiser: Advertiser!
+  activity: Activity!
+  attendance: [Attendance]
+}
+
+type EventPage {
+  node: Event!
+  cursor: String!
+}
+
+type Group {
+  groupId: Int!
+  name: String!
+  members(
+    first: Int
+    after: ID
+    last: Int
+    before: ID
+    orderBy: String = "appUserId"
+    orderDirection: OrderDirection = Asc
+  ): AppUserConnection
+}
+
+type GroupConnection {
+  totalCount: Int!
+  edges: [GroupConnectionEdge!]
+  pageInfo: PageInfo!
+}
+
+type GroupConnectionEdge {
+  node: Group!
+  cursor: String!
+}
+
+enum GroupStatus {
+  """
+  The user has chosen not to join the group
+  """
+  Passed
+
+  """
+  The user has joined the group
+  """
+  Joined
+
+  """
+  The user has been "ghosted" within the group
+  """
+  Ghosted
+}
+
+type Location {
+  locationId: Int!
+  name: String!
+  address: String!
+  events: [Event]
+}
+
+type mutation {
+  updateUserData(
+    appUserId: Int!
+    firstName: String!
+    lastName: String!
+    picUrl: String!
+    birthday: String!
+    gender: Int!
+    phone: String!
+    email: String!
+    frequency: Int!
+    budget: String!
+    country: String!
+    timezone: String!
+  ): AppUser
+  addUserActivity(
+    appUserId: Int!
+    activityId: Int!
+    isAdded: Boolean!
+  ): [UpdateUserActivitiesResult!]!
+  deleteUserActivity(
+    appUserId: Int!
+    activityId: Int!
+    isAdded: Boolean!
+  ): [UpdateUserActivitiesResult!]!
+  updateUserActivity(
+    appUserId: Int!
+    activityId: Int!
+    isAdded: Boolean!
+  ): [UpdateUserActivitiesResult!]!
+  updateUserRecurringSchedules(
+    appUserId: Int!
+    schedules: [UserRecurringScheduleInput!]!
+  ): [UserRecurringSchedule!]!
+  updateUserSchedules(
+    appUserId: Int!
+    schedules: [UserScheduleInput!]!
+  ): [UserSchedule!]!
+}
+
+enum OrderDirection {
+  Asc
+  Desc
+}
+
+type PagedEvent {
+  totalCount: Int!
+  pages: [EventPage!]
+  pageInfo: PageInfo!
+}
+
+type PageInfo {
+  endCursor: ID
+  startCursor: ID
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+}
+
+type PendingInvite {
+  inviteId: Int!
+  groupId: Int!
+  appUserId: Int!
+  contactValue: String!
+  contactMethod: String!
+  groupName: String!
+  inviterName: String!
+  inviterPicUrl: String!
+  inviteSetId: String!
+}
+
+type Plan {
+  planId: Int!
+  eventId: Int!
+  appUserId: Int!
+  groupId: Int!
+  planSetId: String!
+  videoChatUrl: String
+  attendees: [AppUser]
+  event: Event!
+  group: Group!
+}
+
+"""
+The root query object from which all queries originate.
+"""
+type RootQueryType {
+  authInfo(
+    """
+    URL to redirect to upon successful authentication
+    """
+    redirectUri: String
+
+    """
+    Name of OAuth Identity Provider used for login
+    """
+    source: String
+  ): AuthInfo
+  user(id: Int!): AppUser
+  users(page: Int = 0, pageSize: Int = 10): [AppUser]
+  group(id: Int!): Group
+  groups(page: Int = 0, pageSize: Int = 10): [Group]
+  activity(id: Int!): Activity
+  activities(page: Int = 0, pageSize: Int = 10): [Activity]
+  unviewedActivities(
+    page: Int = 0
+    pageSize: Int = 10
+    appUserId: Int!
+    orderBy: String = "activityId"
+    orderDirection: OrderDirection = Asc
+  ): [Activity]
+  advertisers(page: Int = 0, pageSize: Int = 10): [Advertiser]
+  location(id: Int!): Location
+  locations(page: Int = 0, pageSize: Int = 10): [Location]
+  event(id: Int!): Event
+  events(
+    first: Int
+    after: ID
+    last: Int
+    before: ID
+    orderBy: String = "eventId"
+    orderDirection: OrderDirection = Asc
+    startUtc: DateTime
+    endUtc: DateTime
+  ): PagedEvent
+  plan(id: Int!): Plan
+  plans(page: Int = 0, pageSize: Int = 10): [Plan]
+  category(id: Int!): Category
+  categories(page: Int = 0, pageSize: Int = 10): [Category]
+  pendingInvites(
+    contactValue: String
+    contactMethod: ContactMethod
+  ): [PendingInvite]
+}
+
+type UnviewedActivitiesConnection {
+  totalCount: Int!
+  edges: [UnviewedActivitiesConnectionEdge!]
+  pageInfo: PageInfo!
+}
+
+type UnviewedActivitiesConnectionEdge {
+  node: Activity!
+  cursor: String!
+}
+
+type UpdateUserActivitiesResult {
+  activityId: Int!
+  name: String!
+  shortDescription: String
+  description: String
+  imageUrl: String
+  activityUrl: String
+  requiresChatLink: Boolean!
+  isApproved: Boolean
+  ageMin: Int
+  ageMax: Int
+  durationInMinutes: Int
+  gender: Int!
+  priceMin: Float
+  priceMax: Float
+}
+
+type UserContact {
+  userContactId: Int!
+  appUserId: Int!
+  contactType: String!
+  contactValue: String!
+}
+
+type UserRecurringSchedule {
+  userRecurringScheduleId: Int!
+  appUserId: Int!
+  weekDay: Int!
+  imageUrl: String!
+  hourStart: Int!
+  durationInHours: Int!
+  weekDayDisplay: String!
+  startTimeDisplay: String!
+  endTimeDisplay: String!
+}
+
+input UserRecurringScheduleInput {
+  weekDay: Int!
+  imageUrl: String!
+  hourStart: Int!
+  hourEnd: Int!
+}
+
+type UserSchedule {
+  userScheduleId: Int!
+  appUserId: Int!
+  startUtc: DateTime!
+  endUtc: DateTime!
+  timeName: String!
+  isAvailable: String!
+  recurringScheduleId: Int!
+  startLocal: DateTime!
+  endLocal: DateTime!
+}
+
+input UserScheduleInput {
+  startLocal: DateTime!
+  endLocal: DateTime!
+  timeName: String!
+  isAvailable: Boolean!
+}
